@@ -1,0 +1,7 @@
+.DS_Store
+__pycache__/
+*.pyc
+.venv/
+# 案件材料与产物绝不入库
+*.docx
+*.pdf

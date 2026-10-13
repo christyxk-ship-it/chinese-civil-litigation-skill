@@ -1,0 +1,20 @@
+chinese-civil-litigation-skill
+Copyright 2026 徐潜川
+
+本项目按 Apache License 2.0 授权，全文见 LICENSE。
+
+以下两个文件改编自他人作品，已按 Apache License 2.0 第 4 条在文件内标明修改：
+
+- civil-litigation/references/对方攻击.md
+  改编自 Larissa Meredith-Flister 的 opposing-counsel-review
+  （https://github.com/lawvable/awesome-legal-skills，Apache-2.0），
+  参考 matematicsolutions/awesome-matematic-skills-en 的 opposing-counsel-attack-en（Apache-2.0）。
+- civil-litigation/references/法官冷读.md
+  改编自 Larissa Meredith-Flister 的 judicial-first-impression
+  （https://github.com/lawvable/awesome-legal-skills，Apache-2.0），
+  参考 matematicsolutions/awesome-matematic-skills-en 的 judicial-first-impression-en（Apache-2.0）。
+
+2026-10-12 译为中文，并按中国诉讼实务有删改。
+
+焦点编的分轮讨论法借鉴 Matt Pocock 的 grilling，核证编的问卷写法借鉴其 to-questionnaire
+（https://github.com/mattpocock/skills，MIT），只借方法，未复制原文。
