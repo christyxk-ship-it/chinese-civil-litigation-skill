@@ -1,4 +1,4 @@
 # 只有举证编的证据卷脚本需要；不用该脚本可不装
-pypdf>=6.17
-reportlab>=4.0
-pillow>=10.0
+pypdf>=6.20.0
+reportlab>=5.0.1
+pillow>=12.3.0
