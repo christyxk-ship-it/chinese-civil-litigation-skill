@@ -1,6 +1,6 @@
 # 民事诉讼技能包（civil-litigation）
 
-*A Claude Code / Codex skill that walks a Chinese litigation lawyer's AI agent through a civil case, from intake to appeal, in sixteen chapters.*
+*A Claude Code / Codex / WorkBuddy skill that walks a Chinese litigation lawyer's AI agent through a civil case, from intake to appeal, in sixteen chapters.*
 
 给中国诉讼律师用的 AI Agent 技能包：从收案、起诉、答辩，一路到质证、开庭、上诉，共十六编。律师点名哪一编，Agent 就按那一编的做法出活。
 
@@ -34,7 +34,7 @@
 
 ## 安装
 
-需要 macOS 或 Linux，以及 [Claude Code](https://claude.com/claude-code) 或 Codex。
+需要 macOS 或 Linux，以及 [Claude Code](https://claude.com/claude-code)、Codex 或 WorkBuddy。
 
 ```bash
 git clone https://github.com/christyxk-ship-it/chinese-civil-litigation-skill.git
@@ -43,6 +43,14 @@ cd chinese-civil-litigation-skill
 ```
 
 用 Codex 的把 `claude` 换成 `codex`；两个都用，就写两次 `--target`。已有同名技能会先移到 `skill-backups` 目录备份，不会删除。
+
+用 WorkBuddy 的，把仓库里的 `civil-litigation` 目录整个放进 `~/.workbuddy/skills/`：
+
+```bash
+cp -R civil-litigation ~/.workbuddy/skills/
+```
+
+也可以把本仓库链接直接发给你的 Agent，让它自己装。
 
 举证编的证据卷脚本还需要三个 Python 包，不用这个脚本可以不装：
 
