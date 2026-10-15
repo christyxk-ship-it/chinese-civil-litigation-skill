@@ -95,3 +95,4 @@ Apache License 2.0，见 [LICENSE](LICENSE) 与 [NOTICE](NOTICE)。
 ## 进展日志
 
 - 2026-10-13：首次公开发布，十六编。
+- 2026-10-15：依赖下限升级到 pypdf 6.20、reportlab 5.0、pillow 12.3，证据卷脚本实测可用。
