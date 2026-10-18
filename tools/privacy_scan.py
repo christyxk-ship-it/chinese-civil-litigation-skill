@@ -6,7 +6,8 @@
     python3 tools/privacy_scan.py --words 词表.txt  # 另加维护者本机的私有词表（不入库）
 
 通用格式：本机绝对路径、手机号、身份证号、邮箱、银行卡号、案号。
-词表每行一个词；写成「词|文件名」表示该词只允许出现在那个文件里（如 NOTICE 的版权行）。
+词表每行一个词；写成「词|文件名」表示该词只允许出现在那个文件里（如 NOTICE 的版权行）；
+以「re:」开头的按正则匹配，可用否定环视只拦单独出现的昵称、放过含同一片段的产品名。
 查到即退出码 1。
 """
 import argparse
@@ -43,7 +44,8 @@ def load_words(path):
         line = line.strip()
         if line and not line.startswith("#"):
             word, _, allow = line.partition("|")
-            words.append((word, allow or None))
+            matcher = re.compile(word[3:]).search if word.startswith("re:") else (lambda s, w=word: w in s)
+            words.append((word, allow or None, matcher))
     return words
 
 
@@ -57,7 +59,7 @@ def main():
         rel = p.relative_to(ROOT).as_posix()
         for n, line in enumerate(p.read_text(encoding="utf-8", errors="replace").splitlines(), 1):
             found = [k for k, rx in PATTERNS.items() if rx.search(line)]
-            found += [f"私有词「{w}」" for w, allow in words if w in line and allow != rel]
+            found += [f"私有词「{w}」" for w, allow, hit in words if hit(line) and allow != rel]
             for f in found:
                 hits += 1
                 print(f"{rel}:{n}: {f}")

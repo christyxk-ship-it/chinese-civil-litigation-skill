@@ -9,7 +9,7 @@
 {
   "output": "输出 PDF 绝对路径",
   "tmp_dir": "页码映射等中间产物目录",
-  "fonts": {"fangsong": "仿宋 ttf/ttc 路径", "songti": "宋体 ttf/ttc 路径"},   // 可省，省略时按 FONT_CANDIDATES 依次找
+  "fonts": {"fangsong": "仿宋 ttf/ttc 路径"},   // 可省，省略时按 FONT_CANDIDATES 依次找；本脚本只用仿宋
   "cover": {
     "title": "被告《XX》证据",
     "lines": ["案件名第一行", "案件名第二行", "案号：【待定】", "",
@@ -20,9 +20,10 @@
   ]
 }
 
-结构：封面(1页) + 目录页(1页) + 每项[分隔页 + 内容页]，全卷连续页码「第 X 页，共 Y 页」底部居中。
+结构：封面(1页) + 目录页(项数多时自动续页) + 每项[分隔页 + 内容页]，全卷连续页码「第 X 页，共 Y 页」底部居中。
+图片按 EXIF 方向转正；带旋转标记的扫描页先把旋转落到内容上，页码始终盖在阅读方向的底部。
 页码映射写 tmp_dir/page_map.json（{"total": N, "map": {"1": [起,止], ...}}），供证据目录 docx 页码列回填。
-特殊排版页（数据对照表等）：先自行生成单页 PDF（宋体，与仿宋标示区分），再列入该项 pdfs。
+特殊排版页（数据对照表等）：先自行生成单页 PDF（用宋体，与仿宋标示区分），再列入该项 pdfs。
 """
 
 import json
@@ -30,9 +31,8 @@ import os
 import sys
 from io import BytesIO
 
-from PIL import Image
+from PIL import Image, ImageOps
 from pypdf import PdfReader, PdfWriter
-from reportlab.lib import colors
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.units import cm
 from reportlab.lib.utils import ImageReader
@@ -44,18 +44,11 @@ from reportlab.lib.styles import ParagraphStyle
 
 # 省略 fonts 时依次找：WPS 自带 → Windows → macOS 系统宋体（ttc 子字体序号）。
 # macOS 系统「华文仿宋」在部分版本上只有少量字形，不列入。
-FONT_CANDIDATES = {
-    "fangsong": [
-        ("/Applications/wpsoffice.app/Contents/Resources/office6/fonts/FangS-SC.ttf", 0),
-        ("C:/Windows/Fonts/simfang.ttf", 0),
-        ("/System/Library/Fonts/Supplemental/Songti.ttc", 4),
-    ],
-    "songti": [
-        ("/Applications/wpsoffice.app/Contents/Resources/office6/fonts/ShuS-SC.ttf", 0),
-        ("C:/Windows/Fonts/simsun.ttc", 0),
-        ("/System/Library/Fonts/Supplemental/Songti.ttc", 4),
-    ],
-}
+FONT_CANDIDATES = [
+    ("/Applications/wpsoffice.app/Contents/Resources/office6/fonts/FangS-SC.ttf", 0),
+    ("C:/Windows/Fonts/simfang.ttf", 0),
+    ("/System/Library/Fonts/Supplemental/Songti.ttc", 4),
+]
 
 PW, PH = A4  # 595.27 x 841.89
 
@@ -66,24 +59,20 @@ def load_config(path):
     for k in ("output", "tmp_dir", "cover", "items"):
         if k not in cfg:
             sys.exit(f"配置缺少必填项: {k}")
-    fonts = {}
-    for kind, cands in FONT_CANDIDATES.items():
-        given = cfg.get("fonts", {}).get(kind)
-        if given:
-            if not os.path.isfile(given):
-                sys.exit(f"字体文件不存在（{kind}）: {given}")
-            fonts[kind] = (given, 0)
-            continue
-        found = next(((p, i) for p, i in cands if os.path.isfile(p)), None)
-        if not found:
-            sys.exit(f"找不到可用的{'仿宋' if kind == 'fangsong' else '宋体'}字体。\n"
-                     f"请在配置 fonts.{kind} 中给出本机可用的 ttf 路径")
-        fonts[kind] = found
-    return cfg, fonts
+    given = cfg.get("fonts", {}).get("fangsong")
+    if given:
+        if not os.path.isfile(given):
+            sys.exit(f"字体文件不存在（fangsong）: {given}")
+        font = (given, 0)
+    else:
+        font = next(((p, i) for p, i in FONT_CANDIDATES if os.path.isfile(p)), None)
+        if not font:
+            sys.exit("找不到可用的仿宋字体。\n请在配置 fonts.fangsong 中给出本机可用的 ttf 路径")
+    return cfg, font
 
 
 def prep_image(path, max_side=1600, quality=82):
-    im = Image.open(path)
+    im = ImageOps.exif_transpose(Image.open(path))  # 手机照片按 EXIF 方向转正
     if im.mode != "RGB":
         im = im.convert("RGB")
     w, h = im.size
@@ -150,10 +139,9 @@ def cover_pdf(title, lines):
 
 
 def toc_pdf(items, page_map):
+    """目录页。项数多时自动续页，续页不再画「目录」标题。"""
     b = BytesIO()
     c = canvas.Canvas(b, pagesize=A4)
-    c.setFont("FS", 22)
-    c.drawCentredString(PW / 2, PH - 3.5 * cm, "目　　录")
     left = ParagraphStyle("toc", fontName="FS", fontSize=12, leading=22)
     right = ParagraphStyle("tocr", fontName="FS", fontSize=12, leading=22, alignment=2)
     data = []
@@ -161,31 +149,45 @@ def toc_pdf(items, page_map):
         a, bb = page_map[it["num"]]
         pg = f"第{a}页" if a == bb else f"第{a}–{bb}页"
         data.append([Paragraph(f"证据{it['num']}　{it['name']}", left), Paragraph(pg, right)])
-    tbl = Table(data, colWidths=[12.6 * cm, 3.0 * cm])
-    tbl.setStyle(TableStyle([
+    style = TableStyle([
         ("VALIGN", (0, 0), (-1, -1), "TOP"),
         ("LEFTPADDING", (0, 0), (-1, -1), 0),
         ("RIGHTPADDING", (0, 0), (-1, -1), 0),
         ("TOPPADDING", (0, 0), (-1, -1), 6),
         ("BOTTOMPADDING", (0, 0), (-1, -1), 6),
-    ]))
-    _, h = tbl.wrapOn(c, 15.6 * cm, PH)
-    tbl.drawOn(c, (PW - (12.6 + 3.0) * cm) / 2, PH - 5.2 * cm - h)
-    c.showPage()
+    ])
+    x = (PW - (12.6 + 3.0) * cm) / 2
+    bottom = 2.5 * cm  # 给底部页码留位
+    rest = Table(data, colWidths=[12.6 * cm, 3.0 * cm])
+    rest.setStyle(style)
+    first = True
+    while rest is not None:
+        top = PH - 5.2 * cm if first else PH - 2.5 * cm
+        if first:
+            c.setFont("FS", 22)
+            c.drawCentredString(PW / 2, PH - 3.5 * cm, "目　　录")
+        avail = top - bottom
+        parts = rest.split(15.6 * cm, avail)
+        if not parts:  # 单行都放不下（名称极长），整表硬画，宁可溢出也不丢项
+            parts = [rest]
+        cur, rest = parts[0], (parts[1] if len(parts) > 1 else None)
+        _, h = cur.wrapOn(c, 15.6 * cm, avail)
+        cur.drawOn(c, x, top - h)
+        c.showPage()
+        first = False
     c.save()
     b.seek(0)
     return b
 
 
 def main(cfg_path):
-    cfg, fonts = load_config(cfg_path)
-    fs_path, fs_idx = fonts["fangsong"]
+    cfg, (fs_path, fs_idx) = load_config(cfg_path)
     print("仿宋字体:", fs_path)
     pdfmetrics.registerFont(TTFont("FS", fs_path, subfontIndex=fs_idx))
     pdfmetrics.registerFont(TTFont("FS-B", fs_path, subfontIndex=fs_idx))
     os.makedirs(cfg["tmp_dir"], exist_ok=True)
 
-    # 第一遍：生成各项内容到缓冲（封面1页 + 目录1页，内容自第3页起）
+    # 第一遍：生成各项内容到缓冲
     item_bufs = []
     for it in cfg["items"]:
         bufs = [divider_pdf(it["num"], it["name"])]
@@ -200,18 +202,26 @@ def main(cfg_path):
             bufs.append(image_page_pdf(path, caption))
         item_bufs.append((it["num"], bufs))
 
-    page_map = {}
-    cur = 2  # 第1页封面、第2页目录
-    for num, bufs in item_bufs:
-        start = cur + 1
-        for b in bufs:
-            cur += len(PdfReader(b).pages)
-        page_map[num] = [start, cur]
-    total = cur
+    # 内容页数只算一次；目录页数与页码映射互相依赖，迭代到稳定（项数固定，至多两轮）
+    item_len = [(num, sum(len(PdfReader(b).pages) for b in bufs)) for num, bufs in item_bufs]
+    toc_pages = 1
+    for _ in range(4):
+        page_map = {}
+        cur = 1 + toc_pages  # 第1页封面，随后 toc_pages 页目录
+        for num, n in item_len:
+            page_map[num] = [cur + 1, cur + n]
+            cur += n
+        total = cur
+        toc = toc_pdf(cfg["items"], page_map)
+        n_toc = len(PdfReader(toc).pages)
+        if n_toc == toc_pages:
+            break
+        toc_pages = n_toc
+    else:
+        sys.exit("目录页数未收敛，请检查证据项名称长度")
 
     writer = PdfWriter()
-    for src in [cover_pdf(cfg["cover"]["title"], cfg["cover"]["lines"]),
-                toc_pdf(cfg["items"], page_map)]:
+    for src in [cover_pdf(cfg["cover"]["title"], cfg["cover"]["lines"]), toc]:
         for p in PdfReader(src).pages:
             writer.add_page(p)
     for _, bufs in item_bufs:
@@ -225,6 +235,8 @@ def main(cfg_path):
     writer.write(raw)
     raw.seek(0)
     for i, page in enumerate(PdfReader(raw).pages, start=1):
+        if page.rotation:  # 横向扫描件常带 /Rotate；先把旋转落到内容上，页码才会盖在阅读方向的底部
+            page.transfer_rotation_to_content()
         ob = BytesIO()
         c = canvas.Canvas(ob, pagesize=(float(page.mediabox.width), float(page.mediabox.height)))
         c.setFont("FS", 9)
