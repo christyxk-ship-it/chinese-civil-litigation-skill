@@ -6,10 +6,11 @@ die() { printf '\n错误：%s\n' "$*" >&2; exit 1; }
 
 usage() {
   cat <<'USAGE'
-用法：./install.sh --target claude|codex [--target ...]
+用法：./install.sh --target claude|codex|workbuddy [--target ...]
 
-  claude  装到 ~/.claude/skills/civil-litigation（Claude Code）
-  codex   装到 ~/.agents/skills/civil-litigation（Codex）
+  claude     装到 ~/.claude/skills/civil-litigation（Claude Code）
+  codex      装到 ~/.agents/skills/civil-litigation（Codex）
+  workbuddy  装到 ~/.workbuddy/skills/civil-litigation（WorkBuddy）
 
 已有同名 Skill 会先移到 skill-backups 目录备份，不会删除。
 USAGE
@@ -43,7 +44,8 @@ for target in "${targets[@]}"; do
   case "$target" in
     claude) dest="$HOME/.claude/skills/civil-litigation" ;;
     codex)  dest="$HOME/.agents/skills/civil-litigation" ;;
-    *) die "不支持的宿主：$target（只支持 claude、codex）" ;;
+    workbuddy) dest="$HOME/.workbuddy/skills/civil-litigation" ;;
+    *) die "不支持的宿主：$target（只支持 claude、codex、workbuddy）" ;;
   esac
   mkdir -p "$(dirname "$dest")"
   if [ -e "$dest" ] || [ -L "$dest" ]; then

@@ -1,12 +1,16 @@
 {
-  "_comment": "build_evidence_pdf.py 的示例配置。复制后改路径与内容；fonts 可省略，脚本会依次找 WPS、Windows、macOS 系统字体，找不到再在此指定 ttf 路径。",
-  "output": "/案件目录/被告《XX》证据.pdf",
+  "_comment": "build_evidence_pdf.py 的示例配置。复制后改路径与内容；fonts 可整段删除用默认（macOS WPS 自带仿宋）；脚本只用 fangsong，songti 仅供自制页参考。",
+  "output": "/案件目录/agent工作成果/被告《XX》证据-案件名-YYYYMMDDAgent名.pdf",
   "tmp_dir": "/案件目录/.tmp-evpdf",
+  "fonts": {
+    "fangsong": "/Applications/wpsoffice.app/Contents/Resources/office6/fonts/FangS-SC.ttf",
+    "songti": "/Applications/wpsoffice.app/Contents/Resources/office6/fonts/ShuS-SC.ttf"
+  },
   "cover": {
     "title": "被告《XX》证据",
     "lines": [
       "原告姓名",
-      "与被告公司全名合同纠纷案",
+      "与被告公司全名肖像权纠纷案",
       "案号：【待定】",
       "",
       "提交人：被告公司全名",
