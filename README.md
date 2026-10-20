@@ -1,5 +1,7 @@
 # 民事诉讼技能包（civil-litigation）
 
+一个技能包，让你的Agent变身最靠谱的律师助理，专业准确地处理民事诉讼每个环节！
+
 *A skill for Claude Code, Codex, WorkBuddy, Kimi and other skill-capable agents that walks a Chinese litigation lawyer's AI agent through a civil case, from intake to appeal, in sixteen chapters.*
 
 给中国诉讼律师用的 AI Agent 技能包：从收案、起诉、答辩，一路到质证、开庭、上诉，共十六编。律师点名哪一编，Agent 就按那一编的做法出活。
@@ -83,7 +85,7 @@ python3 -m pip install -r requirements.txt
 /civil-litigation 上诉 一审判决书已收到，先出上诉方案给我看
 ```
 
-斜杠的写法因 Agent 而异：Claude Code、WorkBuddy 是 `/civil-litigation`，Kimi 是 `/skill:civil-litigation`。拿不准的，用方式二。
+斜杠的写法是 `/civil-litigation`。
 
 ### 方式二：用自然语言点名
 
