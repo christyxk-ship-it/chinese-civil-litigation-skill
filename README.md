@@ -1,5 +1,7 @@
 # 民事诉讼技能包（civil-litigation）
 
+Crated By 徐潜川，个人网站见：www.xuqianchuan.com
+
 一个技能包，让 Agent 变身最靠谱的律师助理，专业准确地辅助律师处理民事诉讼每个环节。
 
 *A skill for Claude Code, Codex, WorkBuddy, Kimi and other skill-capable agents that walks a Chinese litigation lawyer's AI agent through a civil case, from intake to appeal, in sixteen chapters.*
