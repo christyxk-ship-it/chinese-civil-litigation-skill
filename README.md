@@ -1,6 +1,6 @@
 # 民事诉讼技能包（civil-litigation）
 
-Created By 徐潜川，个人网站：www.xuqianchuan.com
+Created By **徐潜川**，个人网站：www.xuqianchuan.com
 
 一个技能包，让 Agent 变身最靠谱的律师助理，专业准确地辅助律师处理民事诉讼每个环节。
 
